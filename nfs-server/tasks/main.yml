@@ -1,0 +1,88 @@
+---
+
+# To configure nfs-server you'll be needing package named nfs-utils 
+
+      - name: installing nfs-server 
+        yum:
+           name: nfs-utils 
+           state: present 
+        when: ansible_facts.distribution == "RedHat"     
+             
+# After Installation of nfs-utils you'll get service named nfs-server ! enable and start it !
+             
+      - name: enabling nfs server 
+        service:
+           name: nfs-server
+           state: started
+           enabled: true 
+
+# Enable nfs service in firewall in order to establish connection between nfs-server and nfs-clients 
+# But before doing that ensure firewalld is in running state.
+# NOTE: make sure iptables is in stop state.
+
+      - name: make sure Firewalld is enabled
+        service:
+           name: firewalld
+           state: started 
+           enabled: true 
+
+# if you are not having 'firewalld' module installed ! you have to install it.
+# "ansible-galaxy collection install ansible.posix " use this command to get ansible posix collection that provides firewalld module and others.  
+
+      - name: adding nfs-service to firewalld
+        firewalld:
+           service: nfs 
+           state: enabled
+           permanent: true
+           immediate: true 
+
+# Adding share directory that will be shared among nfs-clients.
+# NOTE: you can craete this directory with any name you want just change the value of given variable in vars directory of the role.
+
+      - name: adding shared directory
+        file:
+             path: "{{ shared_dir }}"
+             state: directory
+             owner: root
+             group: root
+             mode: '2755'
+
+# Adding content to shared directory to check whether the content is accessible through nfs-clients or not !
+#
+      - name: Adding testing file in shared directory
+        file:  
+             path: "{{ shared_dir }}/testing.txt"
+             state: touch
+
+# Create customised file under /etc/exports.d ! name of the file can be anything but make sure this file should have extension as ".exports".
+
+      - name: creating customised file to exports.d 
+        file:
+             path: /etc/exports.d/share.exports 
+             state: touch
+             owner: root
+             group: root
+             mode: '0655'
+
+# Add rules in the export file you have created accordingly. Make changes in template file given in template directory of the given role.
+      
+      - name: adding entry in exports file 
+        template:
+             src: exports.j2
+             dest: /etc/exports.d/share.exports
+
+# Updating Exports file with exportfs command
+        
+      - name: updating exports file 
+        command: "exportfs -r" 
+
+
+# Given command will shows all the directories exported from your system.
+
+      - name: checking if shared directory is export or not 
+        command: "showmount -e"
+        register: output
+
+      - debug:
+             msg: "{{ output.stdout_lines }}"     
+ 

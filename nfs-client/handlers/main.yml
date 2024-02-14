@@ -1,0 +1,11 @@
+---
+
+#This handler entry will mount shared directory persistently in the system by adding the entry in /etc/fstab file 
+
+- name: remount 
+  mount:
+      path: "{{ access_dir }}" 
+      src:  "{{ ipaddress_nfs_server }}:{{ shared_dir }}"
+      fstype: nfs 
+      state: present
+

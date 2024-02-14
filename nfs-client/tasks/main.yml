@@ -1,0 +1,45 @@
+---
+# You need to install nfs-utils in order to use it as nfs-client
+#
+#
+
+- name: installing nfs-utils in the system 
+  yum:
+      name: nfs-utils
+      state: present 
+       
+# Create the directory that will be used as an access point to the shared directory!
+#
+#
+
+- name: creating directory you want to be used as access point to shared directory
+  file:
+      path: "{{ access_dir }}"
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
+        
+# Mount the directory in the system ! so that shared directory can be accessed 
+# NOTE: state in below entry is 'mounted' i.e., temprory mount
+# if you want to make it permanent in the system, you have to make entry in /etc/fstab file. for that state should be "present" instead of 'mountes'!
+# persistent mount is already initialise with the help of handlers. check roles/nfs-client/handlers/main.yml for refernece.
+#
+#
+- name: mounting shared directory of nfs-server to nfs-client
+  mount:
+      path: "{{ access_dir }}" 
+      src:  "{{ ipaddress_nfs_server }}:{{ shared_dir }}"
+      fstype: nfs 
+      state: mounted
+  notify: remount 
+
+# Share Directory is accessible or not ? it can be checked by listing the content of shared directory !   
+
+- name: checking the content of shared directory in access directory
+  command: ls "{{ access_dir }}"
+  register: output
+
+- debug:
+      msg: "{{ output.stdout_lines }}"
+

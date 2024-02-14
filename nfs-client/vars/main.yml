@@ -1,0 +1,12 @@
+---
+#Mention the absolute path of the directory you want to be used as an access point to the shared directory !
+
+access_dir: /access
+
+#Mention the Ip address of NFS-server !
+  
+ipaddress_nfs_server: 192.168.33.167 
+ 
+#Mention the absolute path of shared directory created on nfs-server !
+
+shared_dir: /share  
